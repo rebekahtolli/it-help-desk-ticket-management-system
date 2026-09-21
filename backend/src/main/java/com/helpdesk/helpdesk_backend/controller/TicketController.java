@@ -27,6 +27,7 @@ public class TicketController {
             TicketService ticketService,
             UserRepository userRepository,
             CategoryRepository categoryRepository) {
+
         this.ticketService = ticketService;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
@@ -45,41 +46,68 @@ public class TicketController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createTicket(@RequestBody CreateTicketRequest request) {
+    public ResponseEntity<?> createTicket(
+            @RequestBody CreateTicketRequest request) {
 
         if (request.title() == null || request.title().trim().isEmpty()) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Ticket title is required."));
+                    .body(Map.of(
+                            "message",
+                            "Ticket title is required."
+                    ));
         }
 
-        if (request.description() == null || request.description().trim().isEmpty()) {
+        if (request.description() == null
+                || request.description().trim().isEmpty()) {
+
             return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Ticket description is required."));
+                    .body(Map.of(
+                            "message",
+                            "Ticket description is required."
+                    ));
+        }
+
+        if (request.category() == null
+                || request.category().trim().isEmpty()) {
+
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "message",
+                            "Ticket category is required."
+                    ));
         }
 
         TicketPriority priority;
 
         try {
-            priority = TicketPriority.valueOf(request.priority().toUpperCase());
+            priority = TicketPriority.valueOf(
+                    request.priority().toUpperCase()
+            );
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Invalid ticket priority."));
+                    .body(Map.of(
+                            "message",
+                            "Invalid ticket priority."
+                    ));
         }
 
-        User requester = userRepository.findByUsername("alex.carter")
+        User requester = userRepository
+                .findByUsername("alex.carter")
                 .orElseGet(() -> userRepository.save(
-                		new User(
-                			    "alex.carter",
-                			    "NOT_USED_FOR_AUTHENTICATION",
-                			    "REQUESTER",
-                			    "Alex Carter",
-                			    "alex.carter@example.com"
-                			))
+                        new User(
+                                "alex.carter",
+                                "NOT_USED_FOR_AUTHENTICATION",
+                                "REQUESTER",
+                                "Alex Carter",
+                                "alex.carter@example.com"
+                        )
                 ));
 
-        Category category = categoryRepository.findAll()
+        Category category = categoryRepository
+                .findAll()
                 .stream()
-                .filter(c -> c.getName().equalsIgnoreCase(request.category()))
+                .filter(c -> c.getName()
+                        .equalsIgnoreCase(request.category()))
                 .findFirst()
                 .orElseGet(() -> categoryRepository.save(
                         new Category(
@@ -89,6 +117,7 @@ public class TicketController {
                 ));
 
         Ticket ticket = new Ticket();
+
         ticket.setTitle(request.title().trim());
         ticket.setDescription(request.description().trim());
         ticket.setPriority(priority);
@@ -97,14 +126,15 @@ public class TicketController {
 
         Ticket savedTicket = ticketService.createTicket(ticket);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedTicket);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(savedTicket);
     }
 
     public record CreateTicketRequest(
             String title,
             String description,
             String category,
-            String priority
-    ) {
+            String priority) {
     }
 }
