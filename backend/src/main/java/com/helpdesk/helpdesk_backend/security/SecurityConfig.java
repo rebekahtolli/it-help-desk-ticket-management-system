@@ -13,45 +13,44 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-@Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-        .csrf(csrf -> csrf.disable())
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/test/**").permitAll()
-            .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-            .anyRequest().authenticated()
-        );
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                .anyRequest().authenticated()
+            );
 
-    return http.build();
-}
+        return http.build();
+    }
 
-@Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
 
-    configuration.setAllowedOrigins(List.of(
-        "http://localhost:5173",
-        "https://opulent-space-spoon-wrxg99j9w9v7h77p-5173.app.github.dev"
-    ));
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:5173",
+            "https://opulent-space-spoon-wrxg99j9w9v7h77p-5173.app.github.dev"
+        ));
 
-    configuration.setAllowedMethods(List.of(
-        "GET",
-        "POST",
-        "PUT",
-        "DELETE",
-        "OPTIONS"
-    ));
+        configuration.setAllowedMethods(List.of(
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "OPTIONS"
+        ));
 
-    configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("*"));
 
-    UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
 
-    source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", configuration);
 
-    return source;
-}
-
+        return source;
+    }
 }
