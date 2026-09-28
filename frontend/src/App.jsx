@@ -63,7 +63,7 @@ function App() {
       }
 
       setTicket(data)
-      setMessage('Ticket submitted successfully!')
+      setMessage(`Ticket #${data.id} submitted successfully!`)
 
       setTitle('')
       setDescription('')
@@ -147,17 +147,31 @@ function App() {
           {ticket && (
             <div className="confirmation">
               <h3>Ticket Created</h3>
-              <p><strong>Ticket ID:</strong> {ticket.id}</p>
-              <p><strong>Title:</strong> {ticket.title}</p>
-              <p><strong>Status:</strong> {ticket.status}</p>
-              <p><strong>Priority:</strong> {ticket.priority}</p>
-              <p><strong>Category:</strong> {ticket.category?.name}</p>
+              <p>
+                <strong>Ticket ID:</strong> {ticket.id}
+              </p>
+              <p>
+                <strong>Title:</strong> {ticket.title}
+              </p>
+              <p>
+                <strong>Status:</strong> {ticket.status}
+              </p>
+              <p>
+                <strong>Priority:</strong> {ticket.priority}
+              </p>
+              <p>
+                <strong>Category:</strong> {ticket.category?.name}
+              </p>
             </div>
           )}
         </section>
 
         <section className="ticket-card">
           <h2>Submitted Tickets</h2>
+
+          <button type="button" onClick={loadTickets}>
+            Refresh Tickets
+          </button>
 
           {tickets.length === 0 ? (
             <p>No tickets have been submitted.</p>
@@ -167,19 +181,23 @@ function App() {
                 <h3>
                   Ticket #{savedTicket.id}: {savedTicket.title}
                 </h3>
+
                 <p>{savedTicket.description}</p>
+
                 <p>
                   <strong>Status:</strong> {savedTicket.status}
                 </p>
+
                 <p>
                   <strong>Priority:</strong> {savedTicket.priority}
                 </p>
+
                 <p>
                   <strong>Category:</strong> {savedTicket.category?.name}
                 </p>
               </div>
             ))
-          )}
+          )} 
         </section>
       </main>
     </div>
