@@ -22,8 +22,13 @@ public class TicketController {
     }
 
     @GetMapping
-    public List<Ticket> getAllTickets() {
-        return ticketService.getAllTickets();
+    public List<Ticket> getTickets(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String priority,
+            @RequestParam(required = false) String category) {
+
+        return ticketService.searchTickets(q, status, priority, category);
     }
 
     @GetMapping("/{id}")
@@ -64,3 +69,4 @@ public class TicketController {
             String priority) {
     }
 }
+
