@@ -4,6 +4,7 @@ import com.helpdesk.helpdesk_backend.exception.TicketValidationException;
 import com.helpdesk.helpdesk_backend.model.Category;
 import com.helpdesk.helpdesk_backend.model.Ticket;
 import com.helpdesk.helpdesk_backend.model.TicketPriority;
+import com.helpdesk.helpdesk_backend.model.TicketStatus;
 import com.helpdesk.helpdesk_backend.model.User;
 import com.helpdesk.helpdesk_backend.repository.CategoryRepository;
 import com.helpdesk.helpdesk_backend.repository.TicketRepository;
@@ -59,6 +60,30 @@ public class TicketService {
         return ticketRepository.findAll();
     }
 
+    /**
+     * Search and filter tickets. All arguments are optional (null or blank means
+     * no filter on that field). A numeric keyword is also treated as a ticket ID.
+     */
+    public List<Ticket> searchTickets(
+            String keyword,
+            String statusRaw,
+            String priorityRaw,
+            String categoryName) {
+
+        String validKeyword = blankToNull(keyword);
+        Long ticketId = parseTicketId(validKeyword);
+        TicketStatus status = isBlank(statusRaw) ? null : parseStatus(statusRaw);
+        TicketPriority priority = isBlank(priorityRaw) ? null : parsePriority(priorityRaw);
+
+        return ticketRepository.search(
+                validKeyword,
+                ticketId,
+                status,
+                priority,
+                blankToNull(categoryName)
+        );
+    }
+
     public List<Ticket> getTicketsForRequester(User requester) {
         return ticketRepository.findByRequester(requester);
     }
@@ -87,6 +112,36 @@ public class TicketService {
         }
     }
 
+    private TicketStatus parseStatus(String statusRaw) {
+        try {
+            return TicketStatus.valueOf(statusRaw.trim().toUpperCase());
+        } catch (Exception e) {
+            throw new TicketValidationException("Invalid ticket status.");
+        }
+    }
+
+    private Long parseTicketId(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+
+        String candidate = keyword.startsWith("#") ? keyword.substring(1) : keyword;
+
+        try {
+            return Long.valueOf(candidate.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private String blankToNull(String value) {
+        return isBlank(value) ? null : value.trim();
+    }
+
     private User resolveRequester() {
         return userRepository
                 .findByUsername("alex.carter")
@@ -103,10 +158,7 @@ public class TicketService {
 
     private Category resolveCategory(String categoryName) {
         return categoryRepository
-                .findAll()
-                .stream()
-                .filter(c -> c.getName().equalsIgnoreCase(categoryName))
-                .findFirst()
+                .findByNameIgnoreCase(categoryName)
                 .orElseGet(() -> categoryRepository.save(
                         new Category(categoryName, "Help desk ticket category")
                 ));
