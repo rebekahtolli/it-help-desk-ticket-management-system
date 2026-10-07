@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 
 function App() {
@@ -10,25 +10,54 @@ function App() {
   const [ticket, setTicket] = useState(null)
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(false)
+  const [searchText, setSearchText] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [listError, setListError] = useState('')
 
-  const loadTickets = async () => {
+  // The back end performs the search and filtering; the UI only sends the criteria.
+  const loadTickets = useCallback(async () => {
+    const params = new URLSearchParams()
+    if (searchText.trim()) params.set('q', searchText.trim())
+    if (statusFilter) params.set('status', statusFilter)
+    if (priorityFilter) params.set('priority', priorityFilter)
+    if (categoryFilter) params.set('category', categoryFilter)
+
+    const query = params.toString()
+
     try {
-      const response = await fetch('http://localhost:8080/api/tickets')
+      const response = await fetch(
+        `http://localhost:8080/api/tickets${query ? `?${query}` : ''}`
+      )
 
       if (!response.ok) {
-        throw new Error('Unable to load tickets.')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Unable to load tickets.')
       }
 
-      const data = await response.json()
-      setTickets(data)
+      setTickets(await response.json())
+      setListError('')
     } catch (error) {
-      console.error(error)
+      setListError(error.message || 'Unable to load tickets.')
     }
-  }
+  }, [searchText, statusFilter, priorityFilter, categoryFilter])
 
+  // Reload (after a short pause while typing) whenever the search or filters change.
   useEffect(() => {
-    loadTickets()
-  }, [])
+    const timer = setTimeout(loadTickets, 300)
+    return () => clearTimeout(timer)
+  }, [loadTickets])
+
+  const filtersActive =
+    searchText.trim() || statusFilter || priorityFilter || categoryFilter
+
+  const clearFilters = () => {
+    setSearchText('')
+    setStatusFilter('')
+    setPriorityFilter('')
+    setCategoryFilter('')
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -169,12 +198,64 @@ function App() {
         <section className="ticket-card">
           <h2>Submitted Tickets</h2>
 
-          <button type="button" onClick={loadTickets}>
-            Refresh Tickets
-          </button>
+          <div className="ticket-filters">
+            <input
+              type="search"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Search by ticket ID or keyword"
+              aria-label="Search tickets by ticket ID or keyword"
+            />
+
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              aria-label="Filter by status"
+            >
+              <option value="">All statuses</option>
+              <option value="OPEN">Open</option>
+              <option value="IN_PROGRESS">In progress</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="CLOSED">Closed</option>
+            </select>
+
+            <select
+              value={priorityFilter}
+              onChange={(event) => setPriorityFilter(event.target.value)}
+              aria-label="Filter by priority"
+            >
+              <option value="">All priorities</option>
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
+            </select>
+
+            <select
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+              aria-label="Filter by category"
+            >
+              <option value="">All categories</option>
+              <option>Hardware</option>
+              <option>Software</option>
+              <option>Network/Internet</option>
+              <option>Account/Access</option>
+              <option>Other</option>
+            </select>
+
+            <button type="button" onClick={clearFilters} disabled={!filtersActive}>
+              Clear filters
+            </button>
+          </div>
+
+          {listError && <p className="message">{listError}</p>}
 
           {tickets.length === 0 ? (
-            <p>No tickets have been submitted.</p>
+            <p>
+              {filtersActive
+                ? 'No tickets match your search or filters.'
+                : 'No tickets have been submitted.'}
+            </p>
           ) : (
             tickets.map((savedTicket) => (
               <div className="saved-ticket" key={savedTicket.id}>
