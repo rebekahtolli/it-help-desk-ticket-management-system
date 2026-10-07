@@ -140,3 +140,13 @@ button:disabled {
 .saved-ticket p {
   margin: 6px 0;
 }
+.ticket-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.ticket-filters input[type='search'] {
+  flex: 1 1 14rem;
+}
