@@ -30,9 +30,31 @@
   color: #d1d5db;
 }
 
+.view-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.view-toggle button {
+  background: #374151;
+  border: 1px solid #6b7280;
+}
+
+.view-toggle button:hover {
+  background: #4b5563;
+}
+
+.view-toggle button.active {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
 main {
   width: 90%;
-  max-width: 850px;
+  max-width: 1000px;
   margin: 30px auto;
 }
 
@@ -140,6 +162,7 @@ button:disabled {
 .saved-ticket p {
   margin: 6px 0;
 }
+
 .ticket-filters {
   display: flex;
   flex-wrap: wrap;
@@ -149,4 +172,77 @@ button:disabled {
 
 .ticket-filters input[type='search'] {
   flex: 1 1 14rem;
+}
+
+.staff-dashboard {
+  max-width: 100%;
+}
+
+.staff-dashboard > p {
+  margin-top: 0;
+}
+
+.staff-ticket-list {
+  margin-top: 20px;
+}
+
+.staff-ticket {
+  padding: 20px 0;
+}
+
+.staff-ticket:first-child {
+  padding-top: 10px;
+}
+
+.ticket-management {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+  padding: 18px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.ticket-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.ticket-actions button {
+  min-width: 110px;
+}
+
+@media (max-width: 700px) {
+  main {
+    width: 95%;
+  }
+
+  .ticket-card {
+    padding: 18px;
+  }
+
+  .ticket-management {
+    grid-template-columns: 1fr;
+  }
+
+  .view-toggle {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .view-toggle button {
+    width: 220px;
+  }
+
+  .ticket-filters {
+    flex-direction: column;
+  }
+
+  .ticket-filters button {
+    width: 100%;
+  }
 }
