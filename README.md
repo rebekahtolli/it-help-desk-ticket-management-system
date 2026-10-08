@@ -1,180 +1,263 @@
 # IT Help Desk Ticket Management System
 
-Developed by Team Alpha
+A web-based IT Help Desk Ticket Management System that allows users to submit IT support requests and allows IT staff to manage those requests.
 
-## Project Overview
+## Project Description
 
-The IT Help Desk Ticket Management System is a web application designed to allow users to submit technology support requests and allow IT staff to manage those requests.
+The IT Help Desk Ticket Management System provides a centralized way for an organization to submit and manage IT support requests. Users can create tickets describing their issues, while IT staff can view, search, assign, update, resolve, and close tickets.
 
-The current implementation includes a working vertical slice for ticket submission. A requester can enter a ticket through the React interface, submit it to the Spring Boot backend, store the ticket in a MySQL database, and retrieve the saved ticket for display in the interface.
+The system is designed for small to medium-sized organizations and replaces the need to manage support requests through email, phone calls, or in-person communication.
+
+## Main Features
+
+### Requester
+
+- Create a new support ticket
+- Enter a ticket title and description
+- Select a category
+- Select a priority
+- Receive a unique ticket ID
+- View submitted tickets
+- Search for tickets
+- Filter tickets by status, priority, and category
+- View ticket status and assignment information
+
+### IT Staff
+
+- View submitted tickets
+- Search tickets by ID or keyword
+- Filter tickets by status, priority, and category
+- Assign tickets to IT staff
+- Reassign tickets when needed
+- Update ticket status
+- Update ticket priority
+- Update ticket category
+- Resolve tickets
+- Close tickets
+
+### Validation and Error Handling
+
+The system includes validation for:
+
+- Required ticket fields
+- Invalid ticket priority or status values
+- Missing ticket categories
+- Tickets that cannot be found
+- Invalid staff assignments
+- Searches with no matching tickets
+
+The system prevents invalid ticket information from being saved.
 
 ## Project Tech Stack
 
-- Frontend: React 19 with Vite
-- Backend: Java with Spring Boot 4
-- Database: MySQL 8
-- Persistence: Spring Data JPA / Hibernate
-- Build Tools: Maven Wrapper and npm
+### Frontend
 
-## Software Used During Development
+- React
+- Vite
+- JavaScript
+- HTML
+- CSS
 
-The project was tested with the following versions:
+### Backend
 
-- Java 25.0.1
-- Spring Boot 4.0.8
-- MySQL Server 8.0.46
-- Node.js 24.21.0
-- npm 11.19.0
-- React 19.2.8
-- Vite 8.3.0
+- Java
+- Spring Boot
+- Spring Data JPA
+- REST API
+- Maven
 
-The Maven Wrapper is included with the backend project, so a separate Maven installation is not required.
+### Database
+
+- MySQL
+
+### Development Tools
+
+- Visual Studio Code
+- Git
+- GitHub
+- MySQL Workbench
+
+## Testing / Software Versions
+
+The application was developed and tested using the following software versions:
+
+- Java: OpenJDK Temurin 25.0.4.1 LTS
+- Node.js: 24.21.0
+- npm: 11.19.0
+- Maven: 3.9.16
+- MySQL Server: 8.0.46
+- MySQL Workbench: 8.0.46
+- Vite: 8.3.0
+
+## Project Structure
+
+```text
+it-help-desk-ticket-management-system/
+│
+├── backend/
+│   ├── src/
+│   └── pom.xml
+│
+├── frontend/
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.js
+│
+├── .gitignore
+└── README.md
+```
+
+## System Architecture
+
+The system uses a three-tier architecture.
+
+### Presentation Layer
+
+The React frontend provides the requester interface and IT Staff Dashboard.
+
+### Application Layer
+
+The Spring Boot backend handles the REST API, ticket management, validation, and application logic.
+
+### Data Layer
+
+The MySQL database stores ticket and user information along with categories, ticket history, and ticket notes.
+
+The frontend communicates with the backend through REST API requests.
 
 ## Database Setup
 
-MySQL Server must be installed and running before starting the backend.
+The application uses MySQL for persistent data storage.
 
-Create a database for the application:
+Create a database named:
 
-```sql
-CREATE DATABASE helpdesk_db;
+```text
+helpdesk_db
 ```
 
-The application uses environment variables for the database connection. Database credentials should not be stored directly in the repository.
+The application uses the following environment variables:
 
-### Windows Command Prompt
-
-Set the following environment variables before starting the backend:
-
-```bat
-set DB_URL=jdbc:mysql://localhost:3306/helpdesk_db
-set DB_USERNAME=YOUR_MYSQL_USERNAME
-set DB_PASSWORD=YOUR_MYSQL_PASSWORD
+```text
+DB_URL
+DB_USERNAME
+DB_PASSWORD
 ```
 
-Replace `YOUR_MYSQL_USERNAME` and `YOUR_MYSQL_PASSWORD` with the credentials for your local MySQL installation.
+The default database configuration is:
 
-### macOS/Linux
-
-```bash
-export DB_URL=jdbc:mysql://localhost:3306/helpdesk_db
-export DB_USERNAME=YOUR_MYSQL_USERNAME
-export DB_PASSWORD=YOUR_MYSQL_PASSWORD
+```text
+DB_URL=jdbc:mysql://localhost:3306/helpdesk_db
+DB_USERNAME=helpdesk
+DB_PASSWORD=<your database password>
 ```
 
-The application uses Hibernate with `spring.jpa.hibernate.ddl-auto=update`, so the required application tables are created or updated automatically when the backend starts successfully.
+Make sure the MySQL user has permission to access the `helpdesk_db` database.
 
-No SQL seed file is required for the current vertical slice. When the first ticket is submitted, the application creates the current test requester and the selected ticket category if they do not already exist.
+The application uses Hibernate to update the database schema when the backend starts.
 
-## Running the Backend
+## Running the Application
 
-From the root of the repository, change to the backend directory.
+### Start the Backend
 
-### Windows
+Open a terminal in the `backend` directory and run:
 
-```bat
-cd backend
-mvnw.cmd spring-boot:run
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
 
-### macOS/Linux
-
-```bash
-cd backend
-./mvnw spring-boot:run
-```
-
-The backend runs at:
+The backend runs on:
 
 ```text
 http://localhost:8080
 ```
 
-The ticket API is available at:
+### Start the Frontend
 
-```text
-http://localhost:8080/api/tickets
+Open another terminal in the `frontend` directory.
+
+If the dependencies have not already been installed, run:
+
+```powershell
+npm.cmd install
 ```
 
-## Running the Frontend
+Then run:
 
-Open a second terminal and change to the frontend directory:
-
-```bat
-cd frontend
-npm install
-npm run dev
+```powershell
+npm.cmd run dev
 ```
 
-Vite will display the local development address. By default, the application is available at:
+The frontend will normally be available at:
 
 ```text
 http://localhost:5173
 ```
 
-Open that address in a web browser.
+Open the provided address in a web browser.
 
-## Current Vertical Slice
+## Using the System
 
-The current working vertical slice implements ticket submission from the user interface through the database.
+### Creating a Ticket
 
-The process is:
+1. Open the application.
+2. Enter a ticket title.
+3. Enter a description of the issue.
+4. Select a category.
+5. Select a priority.
+6. Submit the ticket.
+7. The system creates the ticket and provides a ticket ID.
 
-1. The requester enters a title, description, category, and priority in the React interface.
-2. The requester selects **Submit Ticket**.
-3. The frontend sends a POST request to `/api/tickets`.
-4. `TicketController` receives and validates the request.
-5. `TicketService` sends the ticket through the persistence layer.
-6. Spring Data JPA/Hibernate saves the ticket to MySQL.
-7. The backend returns the created ticket to the frontend.
-8. The interface displays a successful submission confirmation.
-9. The frontend retrieves saved tickets from `/api/tickets` and displays them in the Submitted Tickets section.
-10. Refreshing the page retrieves the persisted ticket from the database again.
+### Managing a Ticket
 
-The backend also rejects invalid ticket submissions, such as a request with a missing title, instead of creating an invalid database record.
+IT staff can manage submitted tickets from the IT Staff Dashboard.
 
-## Current Database Tables
+1. Find the ticket using the search or filters.
+2. Open the ticket.
+3. Assign or reassign an IT staff member.
+4. Update the status, priority, or category as needed.
+5. Resolve the ticket when the issue has been addressed.
+6. Close the ticket when the request is complete.
 
-The current data model includes:
+Changes are saved through the backend and stored in the MySQL database.
 
-- `users`
-- `categories`
-- `tickets`
-- `ticket_notes`
-- `ticket_history`
+## Ticket Statuses
 
-For the current ticket-submission vertical slice, the main tables involved are `users`, `categories`, and `tickets`.
+- Open
+- In Progress
+- Resolved
+- Closed
 
-The `tickets` table contains relationships to the requester, category, and assigned IT staff member. The assigned staff relationship can remain empty when a new ticket is first submitted.
+## Ticket Priorities
 
-## Testing the Backend
+- Low
+- Medium
+- High
 
-Make sure the database environment variables are set and MySQL is running.
+## Ticket Categories
 
-From the backend directory:
+- Hardware
+- Software
+- Network/Internet
+- Account/Access
+- Other
 
-```bat
-mvnw.cmd test
-```
+## Data Persistence
 
-A successful test run should end with:
+Ticket information is stored in the MySQL database.
+
+Changes to ticket assignments, status, priority, and category are saved through the backend. This allows ticket information to remain available after refreshing the application.
+
+## API Endpoints
+
+The backend provides REST API endpoints for ticket operations.
 
 ```text
-BUILD SUCCESS
+GET    /api/tickets
+GET    /api/tickets/{id}
+GET    /api/tickets/staff
+POST   /api/tickets
+PUT    /api/tickets/{id}/assignment
+PUT    /api/tickets/{id}/status
+PUT    /api/tickets/{id}/priority
+PUT    /api/tickets/{id}/category
 ```
-
-## Building the Frontend
-
-From the frontend directory:
-
-```bat
-npm run build
-```
-
-A successful build creates the production files in the frontend `dist` directory.
-
-## Current Implementation Status
-
-The current system skeleton supports creating and retrieving help desk tickets through the React interface, Spring Boot backend, and MySQL database.
-
-Future development will expand the system to include features such as IT staff ticket management, ticket assignment, status changes, notes, ticket history, overdue ticket identification, and the remaining planned functionality.
