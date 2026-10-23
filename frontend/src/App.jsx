@@ -1,259 +1,576 @@
-import { useCallback, useEffect, useState } from 'react'
-import './App.css'
+import { useCallback, useEffect, useState } from 'react';
+import './App.css';
 
-const API_URL = 'http://localhost:8080/api/tickets'
+const API_URL = 'http://localhost:8080/api/tickets';
 
 function App() {
-  const [view, setView] = useState('requester')
+  const [view, setView] = useState('requester');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('Network/Internet');
+  const [priority, setPriority] = useState('MEDIUM');
+  const [message, setMessage] = useState('');
+  const [ticket, setTicket] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('Network/Internet')
-  const [priority, setPriority] = useState('MEDIUM')
-  const [message, setMessage] = useState('')
-  const [ticket, setTicket] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [tickets, setTickets] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [listError, setListError] = useState('');
 
-  const [tickets, setTickets] = useState([])
-  const [searchText, setSearchText] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [priorityFilter, setPriorityFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [listError, setListError] = useState('')
+  const [staff, setStaff] = useState([]);
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [managementMessage, setManagementMessage] = useState('');
 
-  const [staff, setStaff] = useState([])
-  const [staffLoading, setStaffLoading] = useState(false)
-  const [managementMessage, setManagementMessage] = useState('')
+  const [notesTicket, setNotesTicket] = useState(null);
+  const [notes, setNotes] = useState([]);
+  const [noteContent, setNoteContent] = useState('');
+  const [noteVisibleToRequester, setNoteVisibleToRequester] = useState(true);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [notesMessage, setNotesMessage] = useState('');
 
   const loadTickets = useCallback(async () => {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
 
-    if (searchText.trim()) {
-      params.set('q', searchText.trim())
-    }
+    if (searchText.trim()) params.set('q', searchText.trim());
+    if (statusFilter) params.set('status', statusFilter);
+    if (priorityFilter) params.set('priority', priorityFilter);
+    if (categoryFilter) params.set('category', categoryFilter);
 
-    if (statusFilter) {
-      params.set('status', statusFilter)
-    }
-
-    if (priorityFilter) {
-      params.set('priority', priorityFilter)
-    }
-
-    if (categoryFilter) {
-      params.set('category', categoryFilter)
-    }
-
-    const query = params.toString()
-    const url = query ? `${API_URL}?${query}` : API_URL
+    const query = params.toString();
 
     try {
-      const response = await fetch(url)
+      const response = await fetch(
+        query ? `${API_URL}?${query}` : API_URL
+      );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || 'Unable to load tickets.')
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Unable to load tickets.');
       }
 
-      setTickets(await response.json())
-      setListError('')
+      setTickets(await response.json());
+      setListError('');
     } catch (error) {
-      setListError(error.message || 'Unable to load tickets.')
+      setListError(error.message || 'Unable to load tickets.');
     }
-  }, [searchText, statusFilter, priorityFilter, categoryFilter])
+  }, [searchText, statusFilter, priorityFilter, categoryFilter]);
 
   useEffect(() => {
-    const timer = setTimeout(loadTickets, 300)
-
-    return () => clearTimeout(timer)
-  }, [loadTickets])
+    const timer = setTimeout(loadTickets, 300);
+    return () => clearTimeout(timer);
+  }, [loadTickets]);
 
   const loadStaff = useCallback(async () => {
-    setStaffLoading(true)
+    setStaffLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/staff`)
+      const response = await fetch(`${API_URL}/staff`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || 'Unable to load IT staff.')
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Unable to load IT staff.');
       }
 
-      setStaff(await response.json())
+      setStaff(await response.json());
+      setManagementMessage('');
     } catch (error) {
-      setManagementMessage(
-        error.message || 'Unable to load IT staff.'
-      )
+      setManagementMessage(error.message || 'Unable to load IT staff.');
     } finally {
-      setStaffLoading(false)
+      setStaffLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (view === 'staff') {
-      loadStaff()
-      loadTickets()
+      loadStaff();
+      loadTickets();
     }
-  }, [view, loadStaff, loadTickets])
+  }, [view, loadStaff, loadTickets]);
 
-  const filtersActive =
-    searchText.trim() ||
-    statusFilter ||
-    priorityFilter ||
-    categoryFilter
+  const filtersActive = Boolean(
+    searchText.trim() || statusFilter || priorityFilter || categoryFilter
+  );
 
   const clearFilters = () => {
-    setSearchText('')
-    setStatusFilter('')
-    setPriorityFilter('')
-    setCategoryFilter('')
-  }
+    setSearchText('');
+    setStatusFilter('');
+    setPriorityFilter('');
+    setCategoryFilter('');
+  };
 
   const handleSubmit = async (event) => {
-    event.preventDefault()
+    event.preventDefault();
 
     if (!title.trim() || !description.trim()) {
-      setMessage('Please enter a title and description.')
-      return
+      setMessage('Please enter a title and description.');
+      return;
     }
 
-    setLoading(true)
-    setMessage('')
-    setTicket(null)
+    setLoading(true);
+    setMessage('');
+    setTicket(null);
 
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title,
-          description,
+          title: title.trim(),
+          description: description.trim(),
           category,
           priority,
         }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Unable to submit ticket.')
+        throw new Error(data.message || 'Unable to submit ticket.');
       }
 
-      setTicket(data)
-      setMessage(`Ticket #${data.id} submitted successfully!`)
-
-      setTitle('')
-      setDescription('')
-      setCategory('Network/Internet')
-      setPriority('MEDIUM')
-
-      await loadTickets()
+      setTicket(data);
+      setMessage(`Ticket #${data.id} submitted successfully!`);
+      setTitle('');
+      setDescription('');
+      setCategory('Network/Internet');
+      setPriority('MEDIUM');
+      await loadTickets();
     } catch (error) {
-      setMessage(error.message || 'Unable to submit ticket.')
+      setMessage(error.message || 'Unable to submit ticket.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const updateTicket = async (ticketId, endpoint, value) => {
-    setManagementMessage('Updating ticket...')
+    setManagementMessage('Updating ticket...');
 
     try {
       const response = await fetch(
         `${API_URL}/${ticketId}/${endpoint}`,
         {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            value,
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value }),
         }
-      )
+      );
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || 'Unable to update ticket.'
-        )
+        throw new Error(data.message || 'Unable to update ticket.');
       }
 
-      setManagementMessage(
-        `Ticket #${ticketId} updated successfully.`
-      )
-
-      await loadTickets()
+      setManagementMessage(`Ticket #${ticketId} updated successfully.`);
+      await loadTickets();
     } catch (error) {
-      setManagementMessage(
-        error.message || 'Unable to update ticket.'
-      )
+      setManagementMessage(error.message || 'Unable to update ticket.');
     }
-  }
+  };
 
   const assignTicket = async (ticketId, staffId) => {
-    setManagementMessage('Assigning ticket...')
+    setManagementMessage('Assigning ticket...');
 
     try {
       const response = await fetch(
         `${API_URL}/${ticketId}/assignment`,
         {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            staffId: Number(staffId),
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ staffId: Number(staffId) }),
         }
-      )
+      );
 
-      const data = await response.json()
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to assign ticket.');
+      }
+
+      setManagementMessage(`Ticket #${ticketId} assigned successfully.`);
+      await loadTickets();
+    } catch (error) {
+      setManagementMessage(error.message || 'Unable to assign ticket.');
+    }
+  };
+
+  const handleStatusChange = (id, value) =>
+    updateTicket(id, 'status', value);
+
+  const handlePriorityChange = (id, value) =>
+    updateTicket(id, 'priority', value);
+
+  const handleCategoryChange = (id, value) =>
+    updateTicket(id, 'category', value);
+
+  const startWork = (id) => updateTicket(id, 'status', 'IN_PROGRESS');
+  const resolveTicket = (id) => updateTicket(id, 'status', 'RESOLVED');
+  const closeTicket = (id) => updateTicket(id, 'status', 'CLOSED');
+
+  const loadNotes = async (ticketId = notesTicket?.id) => {
+    if (!ticketId) return;
+
+    setNotesLoading(true);
+    setNotesMessage('');
+
+    try {
+      const response = await fetch(`${API_URL}/${ticketId}/notes`);
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(
-          data.message || 'Unable to assign ticket.'
-        )
+          data.message || `Unable to load conversation (HTTP ${response.status}).`
+        );
       }
 
-      setManagementMessage(
-        `Ticket #${ticketId} assigned successfully.`
-      )
-
-      await loadTickets()
+      setNotes(Array.isArray(data) ? data : []);
     } catch (error) {
-      setManagementMessage(
-        error.message || 'Unable to assign ticket.'
-      )
+      setNotesMessage(error.message || 'Unable to load conversation.');
+    } finally {
+      setNotesLoading(false);
     }
+  };
+
+  const openNotes = async (selectedTicket) => {
+    setNotesTicket(selectedTicket);
+    setNotes([]);
+    setNoteContent('');
+    setNotesMessage('');
+    setNoteVisibleToRequester(true);
+    await loadNotes(selectedTicket.id);
+  };
+
+const sendNote = async (event) => {
+  event.preventDefault();
+
+  if (!notesTicket || !noteContent.trim()) {
+    setNotesMessage('Enter a message before sending.');
+    return;
   }
 
-  const handleStatusChange = async (ticketId, status) => {
-    await updateTicket(ticketId, 'status', status)
+  setNotesLoading(true);
+  setNotesMessage('');
+
+  const senderType = view === 'staff' ? 'IT_STAFF' : 'USER';
+
+  try {
+    const response = await fetch(
+      `${API_URL}/${notesTicket.id}/notes`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: noteContent.trim(),
+          visibleToRequester:
+            senderType === 'USER' ? true : noteVisibleToRequester,
+          senderType,
+        }),
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+          `Unable to send message (HTTP ${response.status}).`
+      );
+    }
+
+    setNoteContent('');
+    await loadNotes();
+    setNotesMessage('Message sent successfully.');
+  } catch (error) {
+    setNotesMessage(
+      error.message || 'Unable to send message.'
+    );
+  } finally {
+    setNotesLoading(false);
+  }
+};
+
+  const renderFilters = () => (
+    <div className="ticket-filters">
+      <input
+        type="search"
+        value={searchText}
+        onChange={(event) => setSearchText(event.target.value)}
+        placeholder="Search by ticket ID or keyword"
+        aria-label="Search tickets"
+      />
+
+      <select
+        value={statusFilter}
+        onChange={(event) => setStatusFilter(event.target.value)}
+      >
+        <option value="">All statuses</option>
+        <option value="OPEN">Open</option>
+        <option value="IN_PROGRESS">In progress</option>
+        <option value="RESOLVED">Resolved</option>
+        <option value="CLOSED">Closed</option>
+      </select>
+
+      <select
+        value={priorityFilter}
+        onChange={(event) => setPriorityFilter(event.target.value)}
+      >
+        <option value="">All priorities</option>
+        <option value="LOW">Low</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="HIGH">High</option>
+      </select>
+
+      <select
+        value={categoryFilter}
+        onChange={(event) => setCategoryFilter(event.target.value)}
+      >
+        <option value="">All categories</option>
+        <option value="Hardware">Hardware</option>
+        <option value="Software">Software</option>
+        <option value="Network/Internet">Network/Internet</option>
+        <option value="Account/Access">Account/Access</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <button type="button" onClick={clearFilters} disabled={!filtersActive}>
+        Clear filters
+      </button>
+    </div>
+  );
+
+  const renderNotes = () => {
+  if (!notesTicket) {
+    return null;
   }
 
-  const handlePriorityChange = async (ticketId, priorityValue) => {
-    await updateTicket(ticketId, 'priority', priorityValue)
-  }
+  return (
+    <section className="ticket-card">
+      <h2>Conversation: Ticket #{notesTicket.id}</h2>
+      <p>{notesTicket.title}</p>
 
-  const handleCategoryChange = async (ticketId, categoryValue) => {
-    await updateTicket(ticketId, 'category', categoryValue)
-  }
+      <button
+        type="button"
+        onClick={() => {
+          setNotesTicket(null);
+          setNotes([]);
+          setNotesMessage('');
+        }}
+      >
+        Close Conversation
+      </button>
 
-  const startWork = async (ticketId) => {
-    await updateTicket(ticketId, 'status', 'IN_PROGRESS')
-  }
+      <button
+        type="button"
+        onClick={loadNotes}
+        disabled={notesLoading}
+      >
+        {notesLoading ? 'Loading...' : 'Refresh Conversation'}
+      </button>
 
-  const resolveTicket = async (ticketId) => {
-    await updateTicket(ticketId, 'status', 'RESOLVED')
-  }
+      {notesMessage && (
+        <p className="message" role="status">
+          {notesMessage}
+        </p>
+      )}
 
-  const closeTicket = async (ticketId) => {
-    await updateTicket(ticketId, 'status', 'CLOSED')
-  }
+      <div className="conversation-messages">
+        <h3>Messages</h3>
+
+        {notesLoading && notes.length === 0 ? (
+          <p>Loading conversation...</p>
+        ) : notes.length === 0 ? (
+          <p>No messages yet. Start the conversation below.</p>
+        ) : (
+          notes.map((note) => (
+            <article className="saved-ticket" key={note.id}>
+              <p>
+                <strong>
+                  {note.author?.role?.toUpperCase() === 'IT_STAFF'
+                    ? 'IT Staff'
+                    : 'User'}
+                </strong>
+              </p>
+
+              <p>{note.content}</p>
+
+              <p>
+                <small>
+                  {note.createdAt
+                    ? new Date(note.createdAt).toLocaleString()
+                    : ''}
+                </small>
+              </p>
+
+              <p>
+                <small>
+                  {note.visibleToRequester
+                    ? 'Requester-visible message'
+                    : 'Internal IT note'}
+                </small>
+              </p>
+            </article>
+          ))
+        )}
+      </div>
+
+      <form onSubmit={sendNote}>
+        <label>
+          Message
+          <textarea
+            value={noteContent}
+            onChange={(event) => setNoteContent(event.target.value)}
+            placeholder="Write your update..."
+            required
+          />
+        </label>
+
+        {view === 'staff' && (
+          <label>
+            <input
+              type="checkbox"
+              checked={noteVisibleToRequester}
+              onChange={(event) =>
+                setNoteVisibleToRequester(event.target.checked)
+              }
+            />
+            Visible to requester
+          </label>
+        )}
+
+        <button
+          type="submit"
+          disabled={notesLoading || !noteContent.trim()}
+        >
+          {notesLoading ? 'Sending...' : 'Send Message'}
+        </button>
+      </form>
+    </section>
+  );
+};
+
+  const renderTicket = (item, isStaffView = false) => (
+    <div className="saved-ticket" key={item.id}>
+      <h3>Ticket #{item.id}: {item.title}</h3>
+      <p>{item.description}</p>
+
+      {isStaffView && (
+        <p>
+          <strong>Requester:</strong> {item.requester?.fullName || 'Unknown'}
+        </p>
+      )}
+
+      <p><strong>Status:</strong> {item.status}</p>
+      <p><strong>Priority:</strong> {item.priority}</p>
+      <p><strong>Category:</strong> {item.category?.name}</p>
+      <p>
+        <strong>Assigned To:</strong>{' '}
+        {item.assignedStaff?.fullName || 'Unassigned'}
+      </p>
+
+      {isStaffView && (
+        <>
+          <div className="ticket-management">
+            <label>
+              Assign To
+              <select
+                value={item.assignedStaff?.id || ''}
+                onChange={(event) => {
+                  if (event.target.value) {
+                    assignTicket(item.id, event.target.value);
+                  }
+                }}
+              >
+                <option value="">Select IT staff</option>
+                {staff.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.fullName}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Status
+              <select
+                value={item.status}
+                onChange={(event) =>
+                  handleStatusChange(item.id, event.target.value)
+                }
+              >
+                <option value="OPEN">Open</option>
+                <option value="IN_PROGRESS">In progress</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+            </label>
+
+            <label>
+              Priority
+              <select
+                value={item.priority}
+                onChange={(event) =>
+                  handlePriorityChange(item.id, event.target.value)
+                }
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+              </select>
+            </label>
+
+            <label>
+              Category
+              <select
+                value={item.category?.name || ''}
+                onChange={(event) =>
+                  handleCategoryChange(item.id, event.target.value)
+                }
+              >
+                <option value="Hardware">Hardware</option>
+                <option value="Software">Software</option>
+                <option value="Network/Internet">Network/Internet</option>
+                <option value="Account/Access">Account/Access</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="ticket-actions">
+            <button
+              type="button"
+              onClick={() => startWork(item.id)}
+              disabled={item.status === 'IN_PROGRESS'}
+            >
+              Start Work
+            </button>
+            <button
+              type="button"
+              onClick={() => resolveTicket(item.id)}
+              disabled={['RESOLVED', 'CLOSED'].includes(item.status)}
+            >
+              Resolve
+            </button>
+            <button
+              type="button"
+              onClick={() => closeTicket(item.id)}
+              disabled={item.status === 'CLOSED'}
+            >
+              Close
+            </button>
+          </div>
+        </>
+      )}
+
+      <button type="button" onClick={() => openNotes(item)}>
+        View Conversation
+      </button>
+    </div>
+  );
 
   return (
     <div className="app">
@@ -269,7 +586,6 @@ function App() {
           >
             Requester View
           </button>
-
           <button
             type="button"
             className={view === 'staff' ? 'active' : ''}
@@ -289,13 +605,9 @@ function App() {
               <form onSubmit={handleSubmit}>
                 <label>
                   Title
-
                   <input
-                    type="text"
                     value={title}
-                    onChange={(event) =>
-                      setTitle(event.target.value)
-                    }
+                    onChange={(event) => setTitle(event.target.value)}
                     placeholder="Example: Laptop cannot connect"
                     required
                   />
@@ -303,12 +615,9 @@ function App() {
 
                 <label>
                   Description
-
                   <textarea
                     value={description}
-                    onChange={(event) =>
-                      setDescription(event.target.value)
-                    }
+                    onChange={(event) => setDescription(event.target.value)}
                     placeholder="Describe the technology problem..."
                     required
                   />
@@ -316,29 +625,23 @@ function App() {
 
                 <label>
                   Category
-
                   <select
                     value={category}
-                    onChange={(event) =>
-                      setCategory(event.target.value)
-                    }
+                    onChange={(event) => setCategory(event.target.value)}
                   >
-                    <option>Hardware</option>
-                    <option>Software</option>
-                    <option>Network/Internet</option>
-                    <option>Account/Access</option>
-                    <option>Other</option>
+                    <option value="Hardware">Hardware</option>
+                    <option value="Software">Software</option>
+                    <option value="Network/Internet">Network/Internet</option>
+                    <option value="Account/Access">Account/Access</option>
+                    <option value="Other">Other</option>
                   </select>
                 </label>
 
                 <label>
                   Priority
-
                   <select
                     value={priority}
-                    onChange={(event) =>
-                      setPriority(event.target.value)
-                    }
+                    onChange={(event) => setPriority(event.target.value)}
                   >
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
@@ -351,106 +654,24 @@ function App() {
                 </button>
               </form>
 
-              {message && (
-                <p className="message">{message}</p>
-              )}
+              {message && <p className="message">{message}</p>}
 
               {ticket && (
                 <div className="confirmation">
                   <h3>Ticket Created</h3>
-
-                  <p>
-                    <strong>Ticket ID:</strong> {ticket.id}
-                  </p>
-
-                  <p>
-                    <strong>Title:</strong> {ticket.title}
-                  </p>
-
-                  <p>
-                    <strong>Status:</strong> {ticket.status}
-                  </p>
-
-                  <p>
-                    <strong>Priority:</strong> {ticket.priority}
-                  </p>
-
-                  <p>
-                    <strong>Category:</strong>{' '}
-                    {ticket.category?.name}
-                  </p>
+                  <p><strong>Ticket ID:</strong> {ticket.id}</p>
+                  <p><strong>Title:</strong> {ticket.title}</p>
+                  <p><strong>Status:</strong> {ticket.status}</p>
+                  <p><strong>Priority:</strong> {ticket.priority}</p>
+                  <p><strong>Category:</strong> {ticket.category?.name}</p>
                 </div>
               )}
             </section>
 
             <section className="ticket-card">
               <h2>Submitted Tickets</h2>
-
-              <div className="ticket-filters">
-                <input
-                  type="search"
-                  value={searchText}
-                  onChange={(event) =>
-                    setSearchText(event.target.value)
-                  }
-                  placeholder="Search by ticket ID or keyword"
-                  aria-label="Search tickets by ticket ID or keyword"
-                />
-
-                <select
-                  value={statusFilter}
-                  onChange={(event) =>
-                    setStatusFilter(event.target.value)
-                  }
-                  aria-label="Filter by status"
-                >
-                  <option value="">All statuses</option>
-                  <option value="OPEN">Open</option>
-                  <option value="IN_PROGRESS">In progress</option>
-                  <option value="RESOLVED">Resolved</option>
-                  <option value="CLOSED">Closed</option>
-                </select>
-
-                <select
-                  value={priorityFilter}
-                  onChange={(event) =>
-                    setPriorityFilter(event.target.value)
-                  }
-                  aria-label="Filter by priority"
-                >
-                  <option value="">All priorities</option>
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                </select>
-
-                <select
-                  value={categoryFilter}
-                  onChange={(event) =>
-                    setCategoryFilter(event.target.value)
-                  }
-                  aria-label="Filter by category"
-                >
-                  <option value="">All categories</option>
-                  <option>Hardware</option>
-                  <option>Software</option>
-                  <option>Network/Internet</option>
-                  <option>Account/Access</option>
-                  <option>Other</option>
-                </select>
-
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  disabled={!filtersActive}
-                >
-                  Clear filters
-                </button>
-              </div>
-
-              {listError && (
-                <p className="message">{listError}</p>
-              )}
+              {renderFilters()}
+              {listError && <p className="message">{listError}</p>}
 
               {tickets.length === 0 ? (
                 <p>
@@ -459,319 +680,50 @@ function App() {
                     : 'No tickets have been submitted.'}
                 </p>
               ) : (
-                tickets.map((savedTicket) => (
-                  <div
-                    className="saved-ticket"
-                    key={savedTicket.id}
-                  >
-                    <h3>
-                      Ticket #{savedTicket.id}:{' '}
-                      {savedTicket.title}
-                    </h3>
-
-                    <p>{savedTicket.description}</p>
-
-                    <p>
-                      <strong>Status:</strong>{' '}
-                      {savedTicket.status}
-                    </p>
-
-                    <p>
-                      <strong>Priority:</strong>{' '}
-                      {savedTicket.priority}
-                    </p>
-
-                    <p>
-                      <strong>Category:</strong>{' '}
-                      {savedTicket.category?.name}
-                    </p>
-                  </div>
-                ))
+                tickets.map((item) => renderTicket(item))
               )}
             </section>
+
+            {renderNotes()}
           </>
         ) : (
-          <section className="ticket-card staff-dashboard">
-            <h2>IT Staff Dashboard</h2>
+          <>
+            <section className="ticket-card staff-dashboard">
+              <h2>IT Staff Dashboard</h2>
+              <p>Manage tickets, assignments, priorities, categories, status, and conversations.</p>
 
-            <p>
-              Manage submitted tickets, assignments, priorities,
-              categories, and status.
-            </p>
+              {managementMessage && (
+                <p className="message">{managementMessage}</p>
+              )}
 
-            {managementMessage && (
-              <p className="message">
-                {managementMessage}
-              </p>
-            )}
+              {staffLoading ? (
+                <p>Loading IT staff...</p>
+              ) : (
+                <p>Available IT staff: {staff.length}</p>
+              )}
 
-            {staffLoading ? (
-              <p>Loading IT staff...</p>
-            ) : (
-              <p>
-                Available IT staff: {staff.length}
-              </p>
-            )}
+              {listError && <p className="message">{listError}</p>}
+              {renderFilters()}
 
-            {listError && (
-              <p className="message">{listError}</p>
-            )}
+              {tickets.length === 0 ? (
+                <p>
+                  {filtersActive
+                    ? 'No tickets match your search or filters.'
+                    : 'No tickets have been submitted.'}
+                </p>
+              ) : (
+                <div className="staff-ticket-list">
+                  {tickets.map((item) => renderTicket(item, true))}
+                </div>
+              )}
+            </section>
 
-            <div className="ticket-filters">
-              <input
-                type="search"
-                value={searchText}
-                onChange={(event) =>
-                  setSearchText(event.target.value)
-                }
-                placeholder="Search by ticket ID or keyword"
-                aria-label="Search tickets by ticket ID or keyword"
-              />
-
-              <select
-                value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(event.target.value)
-                }
-                aria-label="Filter by status"
-              >
-                <option value="">All statuses</option>
-                <option value="OPEN">Open</option>
-                <option value="IN_PROGRESS">In progress</option>
-                <option value="RESOLVED">Resolved</option>
-                <option value="CLOSED">Closed</option>
-              </select>
-
-              <select
-                value={priorityFilter}
-                onChange={(event) =>
-                  setPriorityFilter(event.target.value)
-                }
-                aria-label="Filter by priority"
-              >
-                <option value="">All priorities</option>
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-              </select>
-
-              <select
-                value={categoryFilter}
-                onChange={(event) =>
-                  setCategoryFilter(event.target.value)
-                }
-                aria-label="Filter by category"
-              >
-                <option value="">All categories</option>
-                <option>Hardware</option>
-                <option>Software</option>
-                <option>Network/Internet</option>
-                <option>Account/Access</option>
-                <option>Other</option>
-              </select>
-
-              <button
-                type="button"
-                onClick={clearFilters}
-                disabled={!filtersActive}
-              >
-                Clear filters
-              </button>
-            </div>
-
-            {tickets.length === 0 ? (
-              <p>
-                {filtersActive
-                  ? 'No tickets match your search or filters.'
-                  : 'No tickets have been submitted.'}
-              </p>
-            ) : (
-              <div className="staff-ticket-list">
-                {tickets.map((savedTicket) => (
-                  <div
-                    className="saved-ticket staff-ticket"
-                    key={savedTicket.id}
-                  >
-                    <h3>
-                      Ticket #{savedTicket.id}:{' '}
-                      {savedTicket.title}
-                    </h3>
-
-                    <p>{savedTicket.description}</p>
-
-                    <p>
-                      <strong>Requester:</strong>{' '}
-                      {savedTicket.requester?.fullName ||
-                        savedTicket.requester?.username ||
-                        'Unknown'}
-                    </p>
-
-                    <p>
-                      <strong>Current Status:</strong>{' '}
-                      {savedTicket.status}
-                    </p>
-
-                    <p>
-                      <strong>Current Priority:</strong>{' '}
-                      {savedTicket.priority}
-                    </p>
-
-                    <p>
-                      <strong>Current Category:</strong>{' '}
-                      {savedTicket.category?.name}
-                    </p>
-
-                    <p>
-                      <strong>Assigned To:</strong>{' '}
-                      {savedTicket.assignedStaff?.fullName ||
-                        'Unassigned'}
-                    </p>
-
-                    <div className="ticket-management">
-                      <label>
-                        Assign To
-
-                        <select
-                          value={
-                            savedTicket.assignedStaff?.id || ''
-                          }
-                          onChange={(event) => {
-                            if (event.target.value) {
-                              assignTicket(
-                                savedTicket.id,
-                                event.target.value
-                              )
-                            }
-                          }}
-                        >
-                          <option value="">
-                            Select IT staff
-                          </option>
-
-                          {staff.map((staffMember) => (
-                            <option
-                              key={staffMember.id}
-                              value={staffMember.id}
-                            >
-                              {staffMember.fullName}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <label>
-                        Status
-
-                        <select
-                          value={savedTicket.status}
-                          onChange={(event) =>
-                            handleStatusChange(
-                              savedTicket.id,
-                              event.target.value
-                            )
-                          }
-                        >
-                          <option value="OPEN">Open</option>
-                          <option value="IN_PROGRESS">
-                            In progress
-                          </option>
-                          <option value="RESOLVED">
-                            Resolved
-                          </option>
-                          <option value="CLOSED">
-                            Closed
-                          </option>
-                        </select>
-                      </label>
-
-                      <label>
-                        Priority
-
-                        <select
-                          value={savedTicket.priority}
-                          onChange={(event) =>
-                            handlePriorityChange(
-                              savedTicket.id,
-                              event.target.value
-                            )
-                          }
-                        >
-                          <option value="LOW">Low</option>
-                          <option value="MEDIUM">Medium</option>
-                          <option value="HIGH">High</option>
-                        </select>
-                      </label>
-
-                      <label>
-                        Category
-
-                        <select
-                          value={
-                            savedTicket.category?.name || ''
-                          }
-                          onChange={(event) =>
-                            handleCategoryChange(
-                              savedTicket.id,
-                              event.target.value
-                            )
-                          }
-                        >
-                          <option>Hardware</option>
-                          <option>Software</option>
-                          <option>Network/Internet</option>
-                          <option>Account/Access</option>
-                          <option>Other</option>
-                        </select>
-                      </label>
-                    </div>
-
-                    <div className="ticket-actions">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          startWork(savedTicket.id)
-                        }
-                        disabled={
-                          savedTicket.status === 'IN_PROGRESS'
-                        }
-                      >
-                        Start Work
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          resolveTicket(savedTicket.id)
-                        }
-                        disabled={
-                          savedTicket.status === 'RESOLVED' ||
-                          savedTicket.status === 'CLOSED'
-                        }
-                      >
-                        Resolve
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          closeTicket(savedTicket.id)
-                        }
-                        disabled={
-                          savedTicket.status === 'CLOSED'
-                        }
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+            {renderNotes()}
+          </>
         )}
       </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

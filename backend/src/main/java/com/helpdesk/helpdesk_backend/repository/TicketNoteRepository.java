@@ -9,4 +9,10 @@ import java.util.List;
 public interface TicketNoteRepository extends JpaRepository<TicketNote, Long> {
 
     List<TicketNote> findByTicket(Ticket ticket);
+
+    List<TicketNote> findByTicketIdOrderByCreatedAtAsc(Long ticketId);
+
+    List<TicketNote> findByTicketIdAndVisibleToRequesterTrueOrderByCreatedAtAsc(Long ticketId);
+
+    List<TicketNote> findByTicketIdAndAuthorIdOrderByCreatedAtAsc(Long ticketId, Long authorId);
 }
