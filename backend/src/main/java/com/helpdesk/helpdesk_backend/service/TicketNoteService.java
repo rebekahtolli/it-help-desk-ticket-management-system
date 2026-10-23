@@ -75,8 +75,7 @@ public class TicketNoteService {
         note.setVisibleToRequester(
                 "IT_STAFF".equalsIgnoreCase(senderType)
                         ? visibleToRequester
-                        : true
-        );
+                        : true);
 
         return ticketNoteRepository.save(note);
     }
@@ -88,8 +87,7 @@ public class TicketNoteService {
         }
 
         return ticketRepository.findById(ticketId)
-                .orElseThrow(() ->
-                        new TicketValidationException(
-                                "Ticket #" + ticketId + " was not found."));
+                .orElseThrow(() -> new TicketValidationException(
+                        "Ticket #" + ticketId + " was not found."));
     }
 }

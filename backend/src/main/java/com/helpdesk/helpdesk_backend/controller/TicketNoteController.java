@@ -26,8 +26,7 @@ public class TicketNoteController {
             @PathVariable Long ticketId) {
 
         return ResponseEntity.ok(
-                ticketNoteService.getNotes(ticketId)
-        );
+                ticketNoteService.getNotes(ticketId));
     }
 
     @PostMapping
@@ -36,11 +35,10 @@ public class TicketNoteController {
             @RequestBody CreateNoteRequest request) {
 
         TicketNote note = ticketNoteService.addNote(
-            ticketId,
-            request.content(),
-            request.visibleToRequester(),
-            request.senderType()
-        );
+                ticketId,
+                request.content(),
+                request.visibleToRequester(),
+                request.senderType());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(note);
     }
@@ -54,8 +52,8 @@ public class TicketNoteController {
     }
 
     public record CreateNoteRequest(
-        String content,
-        boolean visibleToRequester,
-        String senderType) {
-}
+            String content,
+            boolean visibleToRequester,
+            String senderType) {
+    }
 }

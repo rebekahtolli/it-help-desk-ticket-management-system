@@ -211,24 +211,38 @@ function App() {
   const closeTicket = (id) => updateTicket(id, 'status', 'CLOSED');
 
   const loadNotes = async (ticketId = notesTicket?.id) => {
-    if (!ticketId) return;
+    const id =
+      typeof ticketId === 'object' && ticketId !== null
+        ? ticketId.id
+        : ticketId;
+
+    if (id == null || id === '') {
+      setNotesMessage('Unable to refresh: invalid ticket ID.');
+      return;
+    }
 
     setNotesLoading(true);
     setNotesMessage('');
 
     try {
-      const response = await fetch(`${API_URL}/${ticketId}/notes`);
+      const response = await fetch(
+        `${API_URL}/${encodeURIComponent(id)}/notes`
+      );
+
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(
-          data.message || `Unable to load conversation (HTTP ${response.status}).`
+          data.message ||
+          `Unable to load conversation (HTTP ${response.status}).`
         );
       }
 
       setNotes(Array.isArray(data) ? data : []);
     } catch (error) {
-      setNotesMessage(error.message || 'Unable to load conversation.');
+      setNotesMessage(
+        error.message || 'Unable to load conversation.'
+      );
     } finally {
       setNotesLoading(false);
     }
@@ -243,56 +257,56 @@ function App() {
     await loadNotes(selectedTicket.id);
   };
 
-const sendNote = async (event) => {
-  event.preventDefault();
+  const sendNote = async (event) => {
+    event.preventDefault();
 
-  if (!notesTicket || !noteContent.trim()) {
-    setNotesMessage('Enter a message before sending.');
-    return;
-  }
-
-  setNotesLoading(true);
-  setNotesMessage('');
-
-  const senderType = view === 'staff' ? 'IT_STAFF' : 'USER';
-
-  try {
-    const response = await fetch(
-      `${API_URL}/${notesTicket.id}/notes`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: noteContent.trim(),
-          visibleToRequester:
-            senderType === 'USER' ? true : noteVisibleToRequester,
-          senderType,
-        }),
-      }
-    );
-
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(
-        data.message ||
-          `Unable to send message (HTTP ${response.status}).`
-      );
+    if (!notesTicket || !noteContent.trim()) {
+      setNotesMessage('Enter a message before sending.');
+      return;
     }
 
-    setNoteContent('');
-    await loadNotes();
-    setNotesMessage('Message sent successfully.');
-  } catch (error) {
-    setNotesMessage(
-      error.message || 'Unable to send message.'
-    );
-  } finally {
-    setNotesLoading(false);
-  }
-};
+    setNotesLoading(true);
+    setNotesMessage('');
+
+    const senderType = view === 'staff' ? 'IT_STAFF' : 'USER';
+
+    try {
+      const response = await fetch(
+        `${API_URL}/${notesTicket.id}/notes`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: noteContent.trim(),
+            visibleToRequester:
+              senderType === 'USER' ? true : noteVisibleToRequester,
+            senderType,
+          }),
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          `Unable to send message (HTTP ${response.status}).`
+        );
+      }
+
+      setNoteContent('');
+      await loadNotes();
+      setNotesMessage('Message sent successfully.');
+    } catch (error) {
+      setNotesMessage(
+        error.message || 'Unable to send message.'
+      );
+    } finally {
+      setNotesLoading(false);
+    }
+  };
 
   const renderFilters = () => (
     <div className="ticket-filters">
@@ -344,114 +358,114 @@ const sendNote = async (event) => {
   );
 
   const renderNotes = () => {
-  if (!notesTicket) {
-    return null;
-  }
+    if (!notesTicket) {
+      return null;
+    }
 
-  return (
-    <section className="ticket-card">
-      <h2>Conversation: Ticket #{notesTicket.id}</h2>
-      <p>{notesTicket.title}</p>
-
-      <button
-        type="button"
-        onClick={() => {
-          setNotesTicket(null);
-          setNotes([]);
-          setNotesMessage('');
-        }}
-      >
-        Close Conversation
-      </button>
-
-      <button
-        type="button"
-        onClick={loadNotes}
-        disabled={notesLoading}
-      >
-        {notesLoading ? 'Loading...' : 'Refresh Conversation'}
-      </button>
-
-      {notesMessage && (
-        <p className="message" role="status">
-          {notesMessage}
-        </p>
-      )}
-
-      <div className="conversation-messages">
-        <h3>Messages</h3>
-
-        {notesLoading && notes.length === 0 ? (
-          <p>Loading conversation...</p>
-        ) : notes.length === 0 ? (
-          <p>No messages yet. Start the conversation below.</p>
-        ) : (
-          notes.map((note) => (
-            <article className="saved-ticket" key={note.id}>
-              <p>
-                <strong>
-                  {note.author?.role?.toUpperCase() === 'IT_STAFF'
-                    ? 'IT Staff'
-                    : 'User'}
-                </strong>
-              </p>
-
-              <p>{note.content}</p>
-
-              <p>
-                <small>
-                  {note.createdAt
-                    ? new Date(note.createdAt).toLocaleString()
-                    : ''}
-                </small>
-              </p>
-
-              <p>
-                <small>
-                  {note.visibleToRequester
-                    ? 'Requester-visible message'
-                    : 'Internal IT note'}
-                </small>
-              </p>
-            </article>
-          ))
-        )}
-      </div>
-
-      <form onSubmit={sendNote}>
-        <label>
-          Message
-          <textarea
-            value={noteContent}
-            onChange={(event) => setNoteContent(event.target.value)}
-            placeholder="Write your update..."
-            required
-          />
-        </label>
-
-        {view === 'staff' && (
-          <label>
-            <input
-              type="checkbox"
-              checked={noteVisibleToRequester}
-              onChange={(event) =>
-                setNoteVisibleToRequester(event.target.checked)
-              }
-            />
-            Visible to requester
-          </label>
-        )}
+    return (
+      <section className="ticket-card">
+        <h2>Conversation: Ticket #{notesTicket.id}</h2>
+        <p>{notesTicket.title}</p>
 
         <button
-          type="submit"
-          disabled={notesLoading || !noteContent.trim()}
+          type="button"
+          onClick={() => {
+            setNotesTicket(null);
+            setNotes([]);
+            setNotesMessage('');
+          }}
         >
-          {notesLoading ? 'Sending...' : 'Send Message'}
+          Close Conversation
         </button>
-      </form>
-    </section>
-  );
-};
+
+        <button
+          type="button"
+          onClick={() => loadNotes(notesTicket?.id)}
+          disabled={notesLoading}
+        >
+          {notesLoading ? 'Loading...' : 'Refresh Conversation'}
+        </button>
+
+        {notesMessage && (
+          <p className="message" role="status">
+            {notesMessage}
+          </p>
+        )}
+
+        <div className="conversation-messages">
+          <h3>Messages</h3>
+
+          {notesLoading && notes.length === 0 ? (
+            <p>Loading conversation...</p>
+          ) : notes.length === 0 ? (
+            <p>No messages yet. Start the conversation below.</p>
+          ) : (
+            notes.map((note) => (
+              <article className="saved-ticket" key={note.id}>
+                <p>
+                  <strong>
+                    {note.author?.role?.toUpperCase() === 'IT_STAFF'
+                      ? 'IT Staff'
+                      : 'User'}
+                  </strong>
+                </p>
+
+                <p>{note.content}</p>
+
+                <p>
+                  <small>
+                    {note.createdAt
+                      ? new Date(note.createdAt).toLocaleString()
+                      : ''}
+                  </small>
+                </p>
+
+                <p>
+                  <small>
+                    {note.visibleToRequester
+                      ? 'Requester-visible message'
+                      : 'Internal IT note'}
+                  </small>
+                </p>
+              </article>
+            ))
+          )}
+        </div>
+
+        <form onSubmit={sendNote}>
+          <label>
+            Message
+            <textarea
+              value={noteContent}
+              onChange={(event) => setNoteContent(event.target.value)}
+              placeholder="Write your update..."
+              required
+            />
+          </label>
+
+          {view === 'staff' && (
+            <label>
+              <input
+                type="checkbox"
+                checked={noteVisibleToRequester}
+                onChange={(event) =>
+                  setNoteVisibleToRequester(event.target.checked)
+                }
+              />
+              Visible to requester
+            </label>
+          )}
+
+          <button
+            type="submit"
+            disabled={notesLoading || !noteContent.trim()}
+          >
+            {notesLoading ? 'Sending...' : 'Send Message'}
+          </button>
+        </form>
+      </section>
+    );
+  };
 
   const renderTicket = (item, isStaffView = false) => (
     <div className="saved-ticket" key={item.id}>

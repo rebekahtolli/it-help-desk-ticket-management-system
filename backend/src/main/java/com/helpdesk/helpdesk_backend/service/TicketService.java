@@ -83,8 +83,7 @@ public class TicketService {
                 ticketId,
                 status,
                 priority,
-                blankToNull(categoryName)
-        );
+                blankToNull(categoryName));
     }
 
     public List<Ticket> getTicketsForRequester(User requester) {
@@ -107,15 +106,12 @@ public class TicketService {
         Ticket ticket = getRequiredTicket(ticketId);
 
         User staff = userRepository.findById(staffId)
-                .orElseThrow(() ->
-                        new TicketValidationException(
-                                "IT staff member was not found."
-                        ));
+                .orElseThrow(() -> new TicketValidationException(
+                        "IT staff member was not found."));
 
         if (!"IT_STAFF".equalsIgnoreCase(staff.getRole())) {
             throw new TicketValidationException(
-                    "Selected user is not an IT staff member."
-            );
+                    "Selected user is not an IT staff member.");
         }
 
         ticket.setAssignedStaff(staff);
@@ -142,8 +138,7 @@ public class TicketService {
     public Ticket updateCategory(Long ticketId, String categoryName) {
         Ticket ticket = getRequiredTicket(ticketId);
 
-        String validCategoryName =
-                requireText(categoryName, "Ticket category is required.");
+        String validCategoryName = requireText(categoryName, "Ticket category is required.");
 
         ticket.setCategory(resolveCategory(validCategoryName));
 
@@ -152,10 +147,8 @@ public class TicketService {
 
     private Ticket getRequiredTicket(Long ticketId) {
         return ticketRepository.findById(ticketId)
-                .orElseThrow(() ->
-                        new TicketValidationException(
-                                "Ticket #" + ticketId + " was not found."
-                        ));
+                .orElseThrow(() -> new TicketValidationException(
+                        "Ticket #" + ticketId + " was not found."));
     }
 
     private String requireText(String value, String errorMessage) {
@@ -169,24 +162,20 @@ public class TicketService {
     private TicketPriority parsePriority(String priorityRaw) {
         try {
             return TicketPriority.valueOf(
-                    priorityRaw.trim().toUpperCase()
-            );
+                    priorityRaw.trim().toUpperCase());
         } catch (Exception e) {
             throw new TicketValidationException(
-                    "Invalid ticket priority."
-            );
+                    "Invalid ticket priority.");
         }
     }
 
     private TicketStatus parseStatus(String statusRaw) {
         try {
             return TicketStatus.valueOf(
-                    statusRaw.trim().toUpperCase()
-            );
+                    statusRaw.trim().toUpperCase());
         } catch (Exception e) {
             throw new TicketValidationException(
-                    "Invalid ticket status."
-            );
+                    "Invalid ticket status.");
         }
     }
 
@@ -217,29 +206,21 @@ public class TicketService {
     private User resolveRequester() {
         return userRepository
                 .findByUsername("alex.carter")
-                .orElseGet(() ->
-                        userRepository.save(
-                                new User(
-                                        "alex.carter",
-                                        "NOT_USED_FOR_AUTHENTICATION",
-                                        "REQUESTER",
-                                        "Alex Carter",
-                                        "alex.carter@example.com"
-                                )
-                        )
-                );
+                .orElseGet(() -> userRepository.save(
+                        new User(
+                                "alex.carter",
+                                "NOT_USED_FOR_AUTHENTICATION",
+                                "REQUESTER",
+                                "Alex Carter",
+                                "alex.carter@example.com")));
     }
 
     private Category resolveCategory(String categoryName) {
         return categoryRepository
                 .findByNameIgnoreCase(categoryName)
-                .orElseGet(() ->
-                        categoryRepository.save(
-                                new Category(
-                                        categoryName,
-                                        "Help desk ticket category"
-                                )
-                        )
-                );
+                .orElseGet(() -> categoryRepository.save(
+                        new Category(
+                                categoryName,
+                                "Help desk ticket category")));
     }
 }
